@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Open Sea</title>
+<style>
+:root{--fg:#f2f2f2;--dim:#8c8c8c;--line:rgba(255,255,255,.22);--bg:rgba(8,8,8,.58)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:#000;overflow:hidden;color:var(--fg);font:11px/1.35 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.04em;user-select:none}
+canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:grab;touch-action:none}
+canvas#c.drag{cursor:grabbing}
+#ui{position:fixed;left:14px;bottom:14px;width:236px;background:var(--bg);backdrop-filter:blur(14px) saturate(0);-webkit-backdrop-filter:blur(14px) saturate(0);border:1px solid var(--line);padding:10px 12px 10px;transition:opacity .4s,transform .4s;z-index:5}
+#ui.hidden{opacity:0;pointer-events:none;transform:translateY(8px)}
+#ui h1{margin:0 0 8px;font-size:10px;font-weight:400;letter-spacing:.32em;color:var(--dim);display:flex;justify-content:space-between;align-items:center;text-transform:uppercase}
+#ui h1 b{font-weight:400;color:var(--fg)}
+.row{display:grid;grid-template-columns:52px 1fr 54px;align-items:center;gap:8px;height:22px}
+.row label{color:var(--dim);text-transform:uppercase;font-size:9.5px;letter-spacing:.14em}
+.row output{text-align:right;color:var(--fg);font-size:10px;white-space:nowrap;overflow:hidden}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:18px;background:transparent;margin:0;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:1px;background:var(--line)}
+input[type=range]::-moz-range-track{height:1px;background:var(--line)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:9px;height:9px;margin-top:-4px;background:var(--fg);border:0;border-radius:0}
+input[type=range]::-moz-range-thumb{width:9px;height:9px;background:var(--fg);border:0;border-radius:0}
+input[type=range]:focus{outline:none}
+input[type=range]:focus-visible::-webkit-slider-thumb{outline:1px solid var(--fg);outline-offset:2px}
+.btns{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:8px}
+.btns.two{grid-template-columns:repeat(2,1fr)}
+button{font:inherit;letter-spacing:.14em;text-transform:uppercase;font-size:9.5px;color:var(--fg);background:transparent;border:1px solid var(--line);padding:5px 0;cursor:pointer;transition:background .15s,color .15s,border-color .15s}
+button:hover{border-color:var(--fg)}
+button.on{background:var(--fg);color:#000;border-color:var(--fg)}
+button:focus-visible{outline:1px solid var(--fg);outline-offset:2px}
+hr{border:0;border-top:1px solid var(--line);margin:8px 0 6px}
+#pill{position:fixed;left:14px;bottom:14px;z-index:4;background:var(--bg);border:1px solid var(--line);color:var(--fg);padding:6px 10px;font-size:10px;letter-spacing:.2em;display:none;cursor:pointer;backdrop-filter:blur(10px)}
+#hint{position:fixed;right:14px;bottom:14px;color:var(--dim);font-size:10px;text-align:right;line-height:1.6;transition:opacity 1s;z-index:3;text-shadow:0 0 6px #000}
+#tour{position:fixed;left:50%;top:20px;transform:translateX(-50%);z-index:4;color:#fff;font-size:10px;letter-spacing:.34em;text-transform:uppercase;text-shadow:0 0 8px rgba(0,0,0,.8);transition:opacity .8s;pointer-events:none;text-align:center}
+#msg{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:#000;color:#ddd;text-align:center;padding:24px;z-index:9}
+</style>
+</head>
+<body>
+<canvas id="c" tabindex="0"></canvas>
+<div id="tour"></div>
+<div id="hint">WASD move · Q/E down/up · drag look · shift fast · wheel speed · H hide</div>
+<div id="pill">CONTROLS</div>
+<div id="ui" role="group" aria-label="Controls">
+  <h1><b>Open Sea</b><span id="fps"></span></h1>
+  <div class="row"><label for="sea">Sea</label><input id="sea" type="range" min="0" max="12" step="0.05" value="3"><output id="seaO"></output></div>
+  <div class="row"><label for="hour">Time</label><input id="hour" type="range" min="0" max="24" step="0.01" value="18.2"><output id="hourO"></output></div>
+  <div class="row"><label for="clouds">Cloud</label><input id="clouds" type="range" min="0" max="1" step="0.01" value="0.45"><output id="cloudsO"></output></div>
+  <div class="row"><label for="rain">Rain</label><input id="rain" type="range" min="0" max="1" step="0.01" value="0"><output id="rainO"></output></div>
+  <div class="row"><label for="lightning">Strike</label><input id="lightning" type="range" min="0" max="1" step="0.01" value="0"><output id="lightningO"></output></div>
+  <hr>
+  <div class="btns">
+    <button id="bTour">Tour</button><button id="bDive">Dive</button><button id="bYacht">Yacht</button>
+    <button id="bCalm">Calm</button><button id="bNight">Night</button><button id="bStorm">Storm</button>
+  </div>
+  <div class="btns two" style="margin-top:4px"><button id="bQ">Quality</button><button id="bHide">Hide</button></div>
+</div>
+<div id="msg"></div>
+<script src="js/gl.js"></script>
+<script src="js/sh_common.js"></script>
+<script src="js/waves.js"></script>
+<script src="js/sky.js"></script>
+<script src="js/water.js"></script>
+<script src="js/post.js"></script>
+<script src="js/yacht.js"></script>
+<script src="js/wake.js"></script>
+<script src="js/under.js"></script>
+<script src="js/rain.js"></script>
+<script src="js/tour.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
